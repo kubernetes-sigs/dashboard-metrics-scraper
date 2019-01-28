@@ -1,0 +1,16 @@
+# Build and test artifacts:
+.go_workspace/
+.sass-cache/
+.tmp/
+.cached_tools/
+dist/
+coverage/
+
+# System specific files:
+.DS_Store
+
+# IDE specific files:
+.idea/
+*.iml
+*.swp
+.vscode
