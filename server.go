@@ -11,8 +11,8 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	sideapi "github.com/jeefy/metrics-sidecar/pkg/api"
-	sidedb "github.com/jeefy/metrics-sidecar/pkg/database"
+	sideapi "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/api"
+	sidedb "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/database"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
