@@ -8,12 +8,11 @@ FROM golang:${GO_VERSION}-alpine AS builder
 
 # Install the Certificate-Authority certificates for the app to be able to make
 # calls to HTTPS endpoints.
-RUN apk add --no-cache ca-certificates git
+RUN apk add --no-cache ca-certificates git gcc libc-dev
 
 # Set the environment variables for the go command:
-# * CGO_ENABLED=0 to build a statically-linked executable
 # * GOFLAGS=-mod=vendor to force `go build` to look into the `/vendor` folder.
-ENV CGO_ENABLED=0 GOFLAGS=-mod=vendor
+ENV GOFLAGS=-mod=vendor
 
 # Set the working directory outside $GOPATH to enable the support for modules.
 WORKDIR /src
@@ -22,10 +21,11 @@ WORKDIR /src
 COPY ./ ./
 
 # Build the executable to `/app`. Mark the build as statically linked.
-RUN go get -d && \
-    go build \
-    -installsuffix 'static' \
-    -o /metrics-sidecar .
+RUN mkdir -p ${GOPATH}/src/github.com/kubernetes-sigs \
+    && ln -sf `pwd` ${GOPATH}/src/github.com/kubernetes-sigs/dashboard-metrics-scraper \
+    && go build \
+    -installsuffix 'static' -ldflags '-extldflags "-static"'\
+    -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
 # Final stage: the running container.
 FROM scratch AS final
