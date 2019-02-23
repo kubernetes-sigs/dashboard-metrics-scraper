@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"flag"
 	"os"
-	"path/filepath"
 	"time"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,7 +17,6 @@ import (
 	sidedb "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/database"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
 	metricsclient "k8s.io/metrics/pkg/client/clientset/versioned"
 
 	"net/http"
@@ -38,11 +39,7 @@ func main() {
 	// Only log the warning severity or above.
 	log.SetLevel(log.InfoLevel)
 
-	if home := homeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
+	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	dbFile = flag.String("db-file", ":memory:", "What file to use as a SQLite3 database. Defaults to ':memory:'")
 	refreshInterval = flag.Int("refresh-interval", 10, "Frequency (in seconds) to update the metrics database. Defaults to '5'")
 	maxWindow = flag.Int("max-window", 15, "Window of time you wish to retain records (in minutes). Defaults to '15'")
@@ -50,7 +47,7 @@ func main() {
 	flag.Parse()
 
 	// This should only be run in-cluster so...
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	config, err := initInClusterConfig(*kubeconfig)
 	if err != nil {
 		log.Fatalf("Unable to generate a client config: %s", err)
 	}
@@ -126,9 +123,11 @@ func main() {
 	}
 }
 
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
+func initInClusterConfig(kubeconfigPath string) (config *rest.Config, err error) {
+	if len(kubeconfigPath) > 0 {
+		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
-	return os.Getenv("USERPROFILE") // windows
+
+	log.Print("Using in-cluster config to connect to apiserver")
+	return rest.InClusterConfig()
 }
