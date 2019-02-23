@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
-	dashboardProvider "github.com/jeefy/metrics-sidecar/pkg/api/dashboard"
+	dashboardProvider "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/api/dashboard"
 	_ "github.com/mattn/go-sqlite3"
 )
 
