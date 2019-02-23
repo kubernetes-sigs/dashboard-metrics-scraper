@@ -10,9 +10,9 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/gorilla/mux"
-	metricsApi "github.com/kubernetes/dashboard/src/app/backend/integration/metric/api"
 )
 
 func DashboardRouter(r *mux.Router, db *sql.DB) {
@@ -30,7 +30,7 @@ func nodeHandler(db *sql.DB) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		resp, err := getNodeMetrics(db, vars["MetricName"], metricsApi.ResourceSelector{
+		resp, err := getNodeMetrics(db, vars["MetricName"], ResourceSelector{
 			Namespace:    "",
 			ResourceName: vars["Name"],
 		})
@@ -57,7 +57,7 @@ func podHandler(db *sql.DB) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		resp, err := getPodMetrics(db, vars["MetricName"], metricsApi.ResourceSelector{
+		resp, err := getPodMetrics(db, vars["MetricName"], ResourceSelector{
 			Namespace:    vars["Namespace"],
 			ResourceName: vars["Name"],
 		})
@@ -80,7 +80,7 @@ func podHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-func getRows(db *sql.DB, table string, metricName string, selector metricsApi.ResourceSelector) (*sql.Rows, error) {
+func getRows(db *sql.DB, table string, metricName string, selector ResourceSelector) (*sql.Rows, error) {
 	var query string
 	var values []interface{}
 	var args []string
@@ -133,43 +133,43 @@ func getRows(db *sql.DB, table string, metricName string, selector metricsApi.Re
 	getPodMetrics: With a database connection and a resource selector
 	Queries SQLite and returns a list of metrics.
 */
-func getPodMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceSelector) (metricsApi.SidecarMetricResultList, error) {
+func getPodMetrics(db *sql.DB, metricName string, selector ResourceSelector) (SidecarMetricResultList, error) {
 	rows, err := getRows(db, "pods", metricName, selector)
 	if err != nil {
 		log.Errorf("Error getting pod metrics: %v", err)
-		return metricsApi.SidecarMetricResultList{}, err
+		return SidecarMetricResultList{}, err
 	}
 
 	defer rows.Close()
 
-	resultList := make(map[string]metricsApi.SidecarMetric)
+	resultList := make(map[string]SidecarMetric)
 
 	for rows.Next() {
 		var metricValue string
 		var pod string
 		var metricTime string
 		var uid string
-		var newMetric metricsApi.MetricPoint
+		var newMetric MetricPoint
 		err = rows.Scan(&metricValue, &pod, &uid, &metricTime)
 		if err != nil {
-			return metricsApi.SidecarMetricResultList{}, err
+			return SidecarMetricResultList{}, err
 		}
 
 		layout := "2006-01-02T15:04:05Z"
 		t, err := time.Parse(layout, metricTime)
 		if err != nil {
-			return metricsApi.SidecarMetricResultList{}, err
+			return SidecarMetricResultList{}, err
 		}
 
 		v, err := strconv.ParseUint(metricValue, 10, 64)
 
 		if metricName == "memory" {
-			newMetric = metricsApi.MetricPoint{
+			newMetric = MetricPoint{
 				Timestamp: t,
 				Value:     v / 1000,
 			}
 		} else {
-			newMetric = metricsApi.MetricPoint{
+			newMetric = MetricPoint{
 				Timestamp: t,
 				Value:     v,
 			}
@@ -180,22 +180,22 @@ func getPodMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceSe
 			metricThing.AddMetricPoint(newMetric)
 			resultList[pod] = metricThing
 		} else {
-			resultList[pod] = metricsApi.SidecarMetric{
+			resultList[pod] = SidecarMetric{
 				MetricName:   metricName,
-				MetricPoints: []metricsApi.MetricPoint{newMetric},
-				DataPoints:   []metricsApi.DataPoint{},
-				UIDs: []string{
-					pod,
+				MetricPoints: []MetricPoint{newMetric},
+				DataPoints:   []DataPoint{},
+				UIDs: []types.UID{
+					types.UID(pod),
 				},
 			}
 		}
 	}
 	err = rows.Err()
 	if err != nil {
-		return metricsApi.SidecarMetricResultList{}, err
+		return SidecarMetricResultList{}, err
 	}
 
-	result := metricsApi.SidecarMetricResultList{}
+	result := SidecarMetricResultList{}
 	for _, v := range resultList {
 		result.Items = append(result.Items, v)
 	}
@@ -207,19 +207,19 @@ func getPodMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceSe
 	getNodeMetrics: With a database connection and a resource selector
 	Queries SQLite and returns a list of metrics.
 */
-func getNodeMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceSelector) (metricsApi.SidecarMetricResultList, error) {
+func getNodeMetrics(db *sql.DB, metricName string, selector ResourceSelector) (SidecarMetricResultList, error) {
 	stripNum := 2
 	if metricName == "cpu" {
 		stripNum = 1
 	}
 
-	resultList := make(map[string]metricsApi.SidecarMetric)
+	resultList := make(map[string]SidecarMetric)
 
 	rows, err := getRows(db, "nodes", metricName, selector)
 
 	if err != nil {
 		log.Errorf("Error getting node metrics: %v", err)
-		return metricsApi.SidecarMetricResultList{}, err
+		return SidecarMetricResultList{}, err
 	}
 
 	defer rows.Close()
@@ -228,27 +228,27 @@ func getNodeMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceS
 		var node string
 		var metricTime string
 		var uid string
-		var newMetric metricsApi.MetricPoint
+		var newMetric MetricPoint
 		err = rows.Scan(&metricValue, &node, &uid, &metricTime)
 		if err != nil {
-			return metricsApi.SidecarMetricResultList{}, err
+			return SidecarMetricResultList{}, err
 		}
 
 		layout := "2006-01-02T15:04:05Z"
 		t, err := time.Parse(layout, metricTime)
 		if err != nil {
-			return metricsApi.SidecarMetricResultList{}, err
+			return SidecarMetricResultList{}, err
 		}
 
 		v, err := strconv.ParseUint(metricValue[0:len(metricValue)-stripNum], 10, 64)
 
 		if metricName == "memory" {
-			newMetric = metricsApi.MetricPoint{
+			newMetric = MetricPoint{
 				Timestamp: t,
 				Value:     v / 10,
 			}
 		} else {
-			newMetric = metricsApi.MetricPoint{
+			newMetric = MetricPoint{
 				Timestamp: t,
 				Value:     v,
 			}
@@ -259,22 +259,22 @@ func getNodeMetrics(db *sql.DB, metricName string, selector metricsApi.ResourceS
 			metricThing.AddMetricPoint(newMetric)
 			resultList[node] = metricThing
 		} else {
-			resultList[node] = metricsApi.SidecarMetric{
+			resultList[node] = SidecarMetric{
 				MetricName:   metricName,
-				MetricPoints: []metricsApi.MetricPoint{newMetric},
-				DataPoints:   []metricsApi.DataPoint{},
-				UIDs: []string{
-					node,
+				MetricPoints: []MetricPoint{newMetric},
+				DataPoints:   []DataPoint{},
+				UIDs: []types.UID{
+					types.UID(node),
 				},
 			}
 		}
 	}
 	err = rows.Err()
 	if err != nil {
-		return metricsApi.SidecarMetricResultList{}, err
+		return SidecarMetricResultList{}, err
 	}
 
-	result := metricsApi.SidecarMetricResultList{}
+	result := SidecarMetricResultList{}
 	for _, v := range resultList {
 		result.Items = append(result.Items, v)
 	}
