@@ -13,14 +13,6 @@ git:
   depth: 250
   quiet: true
 
-before_script:
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
-  - sudo apt-get update
-  - sudo apt-get -y install docker-ce
-  - sudo service docker restart
-  - docker --version
-
 install:
   - echo "Don't run anything."
 
@@ -30,6 +22,12 @@ jobs:
       script: go test -v ./...
     - stage: deploy
       script:
+        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
+        - sudo apt-get update
+        - sudo apt-get -y install docker-ce
+        - sudo service docker restart
+        - docker --version
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
         - hack/deploy.sh
 
