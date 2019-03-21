@@ -159,14 +159,17 @@ var _ = Describe("Database functions", func() {
 			}
 			defer db.Close()
 
-			sideDb.CreateDatabase(db)
+			err = sideDb.CreateDatabase(db)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			nm := nodeMetrics()
 			pm := podMetrics()
 
 			sideDb.UpdateDatabase(db, &nm, &pm)
 
-			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes'));"
+			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes','localtime'));"
 			_, err = db.Exec(sqlStmt)
 			if err != nil {
 				panic(err.Error())
