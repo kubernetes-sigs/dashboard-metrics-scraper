@@ -20,6 +20,9 @@ before_script:
   - sudo service docker restart
   - docker --version
 
+install:
+  - echo "Don't run anything."
+
 jobs:
   include:
     - stage: test
