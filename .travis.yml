@@ -1,0 +1,35 @@
+# Travis continuous integration system configuration file.
+# Read more at: http://docs.travis-ci.com/user/customizing-the-build/
+
+sudo: required
+dist: xenial
+language: go
+go:
+- "1.11.4"
+
+
+git:
+  depth: 250
+  quiet: true
+
+before_script:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
+  - sudo service docker restart
+  - docker --version
+
+jobs:
+  include:
+    - stage: test
+      script: go test -v ./...
+    - stage: deploy
+      script:
+        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - hack/deploy.sh
+
+stages:
+  - test
+  - name: deploy
+    if: branch = master AND type != pull_request
