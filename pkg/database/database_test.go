@@ -9,7 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -23,8 +23,8 @@ func nodeMetrics() v1beta1.NodeMetricsList {
 	tmp := v1beta1.NodeMetrics{}
 	tmp.SetName("testing")
 	tmp.Usage = v1.ResourceList{
-		v1.ResourceCPU:    resource.MustParse("10000"),
-		v1.ResourceMemory: resource.MustParse("100000"),
+		v1.ResourceCPU:    resource.MustParse("1"),
+		v1.ResourceMemory: resource.MustParse("100"),
 	}
 
 	nm := v1beta1.NodeMetricsList{
@@ -40,8 +40,8 @@ func podMetrics() v1beta1.PodMetricsList {
 	tmp2 := v1beta1.ContainerMetrics{}
 	tmp2.Name = "container_test"
 	tmp2.Usage = v1.ResourceList{
-		v1.ResourceCPU:    resource.MustParse("10000"),
-		v1.ResourceMemory: resource.MustParse("100000"),
+		v1.ResourceCPU:    resource.MustParse("1"),
+		v1.ResourceMemory: resource.MustParse("100"),
 	}
 
 	tmp := v1beta1.PodMetrics{}
@@ -115,16 +115,18 @@ var _ = Describe("Database functions", func() {
 			defer rows.Close()
 			for rows.Next() {
 				var name string
-				var cpu string
-				var memory string
+				var cpu int64
+				var memory int64
 				err = rows.Scan(&name, &cpu, &memory)
 				if err != nil {
 					log.Fatal(err)
 				}
+				testCpu := resource.MustParse("1")
+				testMemory := resource.MustParse("100")
 				Expect(err).To(BeNil())
 				Expect(name).To(Equal("testing"))
-				Expect(cpu).To(Equal("10k"))
-				Expect(memory).To(Equal("100k"))
+				Expect(cpu).To(Equal(testCpu.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue()))
 			}
 
 			rows, err = db.Query("select name, container, cpu, memory from pods")
@@ -135,34 +137,39 @@ var _ = Describe("Database functions", func() {
 			for rows.Next() {
 				var name string
 				var container string
-				var cpu string
-				var memory string
+				var cpu int64
+				var memory int64
 				err = rows.Scan(&name, &container, &cpu, &memory)
 				if err != nil {
 					log.Fatal(err)
 				}
+				testCpu := resource.MustParse("1")
+				testMemory := resource.MustParse("100")
 				Expect(err).To(BeNil())
 				Expect(name).To(Equal("testing"))
 				Expect(container).To(Equal("container_test"))
-				Expect(cpu).To(Equal("10k"))
-				Expect(memory).To(Equal("100k"))
+				Expect(cpu).To(Equal(testCpu.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue()))
 			}
 		})
-		It("should insert metrics into the database.", func() {
+		It("should cull the database based on a window.", func() {
 			db, err := sql.Open("sqlite3", ":memory:")
 			if err != nil {
 				panic(err.Error())
 			}
 			defer db.Close()
 
-			sideDb.CreateDatabase(db)
+			err = sideDb.CreateDatabase(db)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			nm := nodeMetrics()
 			pm := podMetrics()
 
 			sideDb.UpdateDatabase(db, &nm, &pm)
 
-			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','20k','300k','0',datetime('now','-20 minutes'));"
+			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes','localtime'));"
 			_, err = db.Exec(sqlStmt)
 			if err != nil {
 				panic(err.Error())
@@ -178,16 +185,18 @@ var _ = Describe("Database functions", func() {
 			defer rows.Close()
 			for rows.Next() {
 				var name string
-				var cpu string
-				var memory string
+				var cpu int64
+				var memory int64
 				err = rows.Scan(&name, &cpu, &memory)
 				if err != nil {
 					log.Fatal(err)
 				}
+				testCpu := resource.MustParse("1")
+				testMemory := resource.MustParse("100")
 				Expect(err).To(BeNil())
 				Expect(name).To(Equal("testing"))
-				Expect(cpu).To(Equal("10k"))
-				Expect(memory).To(Equal("100k"))
+				Expect(cpu).To(Equal(testCpu.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue()))
 			}
 
 		})

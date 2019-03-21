@@ -1,10 +1,13 @@
 # Accept the Go version for the image to be set as a build argument.
 # Default to Go 1.11
 ARG GO_VERSION=1.11
-ARG GOARCH=amd64
 
 # First stage: build the executable.
 FROM golang:${GO_VERSION}-alpine AS builder
+
+# What arch is it?
+ARG GOARCH=amd64
+ARG GOOS=linux
 
 # Install the Certificate-Authority certificates for the app to be able to make
 # calls to HTTPS endpoints.
@@ -21,9 +24,10 @@ WORKDIR /src
 COPY ./ ./
 
 # Build the executable to `/app`. Mark the build as statically linked.
-RUN mkdir -p ${GOPATH}/src/github.com/kubernetes-sigs \
+RUN echo "Building for $GOARCH" \
+    && mkdir -p ${GOPATH}/src/github.com/kubernetes-sigs \
     && ln -sf `pwd` ${GOPATH}/src/github.com/kubernetes-sigs/dashboard-metrics-scraper \
-    && go build \
+    && GOARCH=${GOARCH} go build \
     -installsuffix 'static' \
     -ldflags '-extldflags "-static"' \
     -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
