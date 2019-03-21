@@ -9,6 +9,7 @@ for i in ${arch_list}; do
     container="${manifest}-${i}"
     
     echo "Now building ${container}"
+    echo "docker build --no-cache --build-arg GOARCH=${i} -t ${container} .";
     docker build --no-cache --build-arg GOARCH=${i} -t ${container} .
 
     echo "Now pushing ${container}"
