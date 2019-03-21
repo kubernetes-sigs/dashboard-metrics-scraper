@@ -7,6 +7,7 @@ FROM golang:${GO_VERSION}-alpine AS builder
 
 # What arch is it?
 ARG GOARCH=amd64
+ARG GOOS=linux
 
 # Install the Certificate-Authority certificates for the app to be able to make
 # calls to HTTPS endpoints.
