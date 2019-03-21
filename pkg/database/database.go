@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -75,6 +76,7 @@ func UpdateDatabase(db *sql.DB, nodeMetrics *v1beta1.NodeMetricsList, podMetrics
 	CullDatabase deletes rows from nodes and pods based on a time window.
 */
 func CullDatabase(db *sql.DB, window *int) error {
+	fmt.Printf("Hey the window here is %d\n", *window)
 	tx, err := db.Begin()
 
 	nodestmt, err := tx.Prepare("delete from nodes where time <= datetime('now',?);")
@@ -90,7 +92,7 @@ func CullDatabase(db *sql.DB, window *int) error {
 
 	podstmt, err := tx.Prepare("delete from pods where time <= datetime('now',?);")
 	defer podstmt.Close()
-	_, err = podstmt.Exec("-" + string(*window) + " minutes")
+	_, err = podstmt.Exec(fmt.Printf("-%d minutes", *window))
 	if err != nil {
 		return err
 	}

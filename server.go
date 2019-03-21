@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"flag"
 	"os"
-	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -38,15 +37,12 @@ func main() {
 	// Only log the warning severity or above.
 	log.SetLevel(log.InfoLevel)
 
-	if home := homeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
+	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	dbFile = flag.String("db-file", ":memory:", "What file to use as a SQLite3 database. Defaults to ':memory:'")
 	refreshInterval = flag.Int("refresh-interval", 10, "Frequency (in seconds) to update the metrics database. Defaults to '5'")
 	maxWindow = flag.Int("max-window", 15, "Window of time you wish to retain records (in minutes). Defaults to '15'")
 
+	flag.Set("logtostderr", "true")
 	flag.Parse()
 
 	// This should only be run in-cluster so...
