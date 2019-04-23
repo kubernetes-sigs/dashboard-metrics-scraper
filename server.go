@@ -25,8 +25,8 @@ import (
 func main() {
 	var kubeconfig *string
 	var dbFile *string
-	var refreshInterval *int
-	var maxWindow *int
+	var metricResolution *time.Duration
+	var metricDuration *time.Duration
 
 	log.SetFormatter(&log.JSONFormatter{})
 
@@ -37,10 +37,10 @@ func main() {
 	// Only log the warning severity or above.
 	log.SetLevel(log.InfoLevel)
 
-	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	dbFile = flag.String("db-file", ":memory:", "What file to use as a SQLite3 database. Defaults to ':memory:'")
-	refreshInterval = flag.Int("refresh-interval", 10, "Frequency (in seconds) to update the metrics database. Defaults to '5'")
-	maxWindow = flag.Int("max-window", 15, "Window of time you wish to retain records (in minutes). Defaults to '15'")
+	kubeconfig = flag.String("kubeconfig", "", "The path to the kubeconfig used to connect to the Kubernetes API server and the Kubelets (defaults to in-cluster config)")
+	dbFile = flag.String("db-file", ":memory:", "What file to use as a SQLite3 database.")
+	metricResolution = flag.Duration("metric-resolution", 1 * time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
+	metricDuration = flag.Duration("metric-duration", 15 * time.Minute, "The duration after which metrics are purged from the database.")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -79,8 +79,8 @@ func main() {
 		log.Fatal(http.ListenAndServe(":8000", r))
 	}()
 
-	// Start the machine. Scrape every refreshInterval
-	ticker := time.NewTicker(time.Duration(*refreshInterval) * time.Second)
+	// Start the machine. Scrape every metricResolution
+	ticker := time.NewTicker(*metricResolution)
 	quit := make(chan struct{})
 
 	for {
@@ -110,14 +110,14 @@ func main() {
 				break
 			}
 
-			// Delete rows outside of the maxWindow time
-			err = sidedb.CullDatabase(db, maxWindow)
+			// Delete rows outside of the metricDuration time
+			err = sidedb.CullDatabase(db, metricDuration)
 			if err != nil {
 				log.Errorf("Error culling database: %s", err)
 				break
 			}
 
-			log.Info("Database updated")
+			log.Infof("Database updated: %d nodes, %d pods", len(nodeMetrics.Items), len(podMetrics.Items))
 		}
 	}
 }

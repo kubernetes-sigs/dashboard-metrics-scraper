@@ -123,8 +123,8 @@ func getRows(db *sql.DB, table string, metricName string, selector ResourceSelec
 
 	query = fmt.Sprintf(query+" where "+strings.Join(args, " and ")+" group by name, time order by %v;", table, strings.Join(orderBy, ", "))
 
-	log.Infof("Query: %s", query)
-	log.Infof("Values: %v", values)
+	log.Debugf("Query: %s", query)
+	log.Debugf("Values: %v", values)
 
 	return db.Query(query, values...)
 }
