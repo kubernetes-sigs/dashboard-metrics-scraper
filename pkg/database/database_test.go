@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"testing"
+	"time"
 
 	sideDb "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/database"
 	_ "github.com/mattn/go-sqlite3"
@@ -175,7 +176,7 @@ var _ = Describe("Database functions", func() {
 				panic(err.Error())
 			}
 
-			timeWindow := 5
+			timeWindow, err := time.ParseDuration("5m")
 			sideDb.CullDatabase(db, &timeWindow)
 
 			rows, err := db.Query("select name, cpu, memory from nodes")
