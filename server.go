@@ -38,9 +38,9 @@ func main() {
 	log.SetLevel(log.InfoLevel)
 
 	kubeconfig = flag.String("kubeconfig", "", "The path to the kubeconfig used to connect to the Kubernetes API server and the Kubelets (defaults to in-cluster config)")
-	dbFile = flag.String("db-file", ":memory:", "What file to use as a SQLite3 database.")
-	metricResolution = flag.Duration("metric-resolution", 1 * time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
-	metricDuration = flag.Duration("metric-duration", 15 * time.Minute, "The duration after which metrics are purged from the database.")
+	dbFile = flag.String("db-file", "/tmp/metrics.db", "What file to use as a SQLite3 database.")
+	metricResolution = flag.Duration("metric-resolution", 1*time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
+	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
