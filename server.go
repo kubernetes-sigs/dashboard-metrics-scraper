@@ -19,6 +19,7 @@ import (
 
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -27,12 +28,13 @@ func main() {
 	var dbFile *string
 	var metricResolution *time.Duration
 	var metricDuration *time.Duration
+	var logLevel *string
 
 	log.SetFormatter(&log.JSONFormatter{})
 
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
+	log.SetOutput(os.Stderr)
 
 	// Only log the warning severity or above.
 	log.SetLevel(log.InfoLevel)
@@ -41,9 +43,17 @@ func main() {
 	dbFile = flag.String("db-file", "/tmp/metrics.db", "What file to use as a SQLite3 database.")
 	metricResolution = flag.Duration("metric-resolution", 1*time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
+	logLevel = flag.String("log-level", "info", "The log level")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
+
+	level, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.SetLevel(level)
+	}
 
 	// This should only be run in-cluster so...
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
@@ -74,9 +84,10 @@ func main() {
 
 	go func() {
 		r := mux.NewRouter()
+
 		sideapi.ApiManager(r, db)
 		// Bind to a port and pass our router in
-		log.Fatal(http.ListenAndServe(":8000", r))
+		log.Fatal(http.ListenAndServe(":8000", handlers.CombinedLoggingHandler(os.Stdout, r)))
 	}()
 
 	// Start the machine. Scrape every metricResolution
