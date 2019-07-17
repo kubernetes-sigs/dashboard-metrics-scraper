@@ -37,13 +37,16 @@ FROM scratch AS final
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Import the compiled executable from the second stage.
-COPY --from=builder /metrics-sidecar /metrics-sidecar
+COPY --chown=1501:1501 --from=builder /metrics-sidecar /metrics-sidecar
 
 # We need a tmp folder too
-COPY --from=builder /tmp /tmp
+COPY --chown=1501:1501 --from=builder /tmp /tmp
 
 # Declare the port on which the webserver will be exposed.
 EXPOSE 8080
+
+# Run as a non-root UID
+USER 1501
 
 # Run the compiled binary.
 ENTRYPOINT ["/metrics-sidecar"]
