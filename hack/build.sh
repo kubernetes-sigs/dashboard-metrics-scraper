@@ -13,6 +13,19 @@ go build \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
+elif [[ "$GOARCH" = "arm64" ]]; then
+
+echo "Detected ARM64. Setting additional variables.";
+
+apt-get install -y gcc-aarch64-linux-gnu
+
+env CC=aarch64-linux-gnu-gcc \
+CGO_ENABLED=1 GOOS=linux \
+go build \
+-installsuffix 'static' \
+-ldflags '-extldflags "-static"' \
+-o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
+
 else
 
 echo "Build script building for ${GOARCH}";
