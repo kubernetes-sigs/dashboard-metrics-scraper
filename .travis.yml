@@ -16,22 +16,30 @@ git:
 install:
   - echo "Don't run anything."
 
+before_script:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
+  - sudo service docker restart
+  - docker --version
+
 jobs:
   include:
     - stage: test
       script: go test -v ./...
     - stage: deploy
       script:
-        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
-        - sudo apt-get update
-        - sudo apt-get -y install docker-ce
-        - sudo service docker restart
-        - docker --version
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
         - hack/deploy.sh
-
+    - stage: release
+      script:
+        - docker login -u $DOCKER_RELEASE_USER -p $DOCKER_RELEASE_PASS
+        - hack/deploy.sh
+        
 stages:
   - test
   - name: deploy
     if: branch = master AND type != pull_request
+  - name: release
+    if: tag IS present AND type != pull_request
