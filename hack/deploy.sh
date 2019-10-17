@@ -1,7 +1,7 @@
 #!/bin/bash
 
 arch_list="amd64 arm arm64 ppc64le s390x"
-manifest="${DOCKER_USER:="jeefy"}/dashboard-metrics-sidecar";
+manifest="kubernetesui/metrics-scraper";
 manifest_list="";
 
 
