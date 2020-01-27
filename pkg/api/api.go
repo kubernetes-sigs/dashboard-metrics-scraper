@@ -10,7 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ApiManager(r *mux.Router, db *sql.DB) {
+func APIManager(r *mux.Router, db *sql.DB) {
 	dashboardRouter := r.PathPrefix("/api/v1/dashboard").Subrouter()
 	dashboardProvider.DashboardRouter(dashboardRouter, db)
 	r.PathPrefix("/").HandlerFunc(DefaultHandler)
