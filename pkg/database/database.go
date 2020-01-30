@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -39,7 +40,7 @@ func UpdateDatabase(db *sql.DB, nodeMetrics *v1beta1.NodeMetricsList, podMetrics
 	defer stmt.Close()
 
 	for _, v := range nodeMetrics.Items {
-		_, err = stmt.Exec(v.UID, v.Name, v.Usage.Cpu().MilliValue(), v.Usage.Memory().MilliValue(), v.Usage.StorageEphemeral().MilliValue())
+		_, err = stmt.Exec(v.UID, v.Name, v.Usage.Cpu().MilliValue(), v.Usage.Memory().MilliValue()/1000, v.Usage.StorageEphemeral().MilliValue()/1000)
 		if err != nil {
 			return err
 		}
@@ -53,7 +54,7 @@ func UpdateDatabase(db *sql.DB, nodeMetrics *v1beta1.NodeMetricsList, podMetrics
 
 	for _, v := range podMetrics.Items {
 		for _, u := range v.Containers {
-			_, err = stmt.Exec(v.UID, v.Name, v.Namespace, u.Name, u.Usage.Cpu().MilliValue(), u.Usage.Memory().MilliValue(), u.Usage.StorageEphemeral().MilliValue())
+			_, err = stmt.Exec(v.UID, v.Name, v.Namespace, u.Name, u.Usage.Cpu().MilliValue(), u.Usage.Memory().MilliValue()/1000, u.Usage.StorageEphemeral().MilliValue()/1000)
 			if err != nil {
 				return err
 			}
@@ -81,25 +82,30 @@ func CullDatabase(db *sql.DB, window *time.Duration) error {
 
 	windowStr := fmt.Sprintf("-%.0f seconds", window.Seconds())
 
-	nodestmt, err := tx.Prepare("delete from nodes where time <= datetime('now',?,'localtime');")
+	nodestmt, err := tx.Prepare("delete from nodes where time <= datetime('now', ?);")
 	if err != nil {
 		return err
 	}
 
 	defer nodestmt.Close()
-	_, err = nodestmt.Exec(windowStr)
+	res, err := nodestmt.Exec(windowStr)
 	if err != nil {
 		return err
 	}
 
-	podstmt, err := tx.Prepare("delete from pods where time <= datetime('now',?,'localtime');")
+	affected, _ := res.RowsAffected()
+	log.Debugf("Cleaning up nodes: %d rows removed", affected)
+
+	podstmt, err := tx.Prepare("delete from pods where time <= datetime('now', ?);")
 
 	defer podstmt.Close()
-	_, err = podstmt.Exec(windowStr)
+	res, err = podstmt.Exec(windowStr)
 	if err != nil {
 		return err
 	}
 
+	affected, _ = res.RowsAffected()
+	log.Debugf("Cleaning up pods: %d rows removed", affected)
 	err = tx.Commit()
 
 	if err != nil {

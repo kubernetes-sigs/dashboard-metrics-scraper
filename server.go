@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,8 +17,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	metricsclient "k8s.io/metrics/pkg/client/clientset/versioned"
-
-	"net/http"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -101,36 +100,43 @@ func main() {
 			return
 
 		case <-ticker.C:
-			err = nil
-			nodeMetrics, err := clientset.Metrics().NodeMetricses().List(v1.ListOptions{})
+			err = update(clientset, db, metricDuration)
 			if err != nil {
-				log.Errorf("Error scraping node metrics: %s", err)
 				break
 			}
-
-			podMetrics, err := clientset.Metrics().PodMetricses("").List(v1.ListOptions{})
-			if err != nil {
-				log.Errorf("Error scraping pod metrics: %s", err)
-				break
-			}
-
-			// Insert scrapes into DB
-			err = sidedb.UpdateDatabase(db, nodeMetrics, podMetrics)
-			if err != nil {
-				log.Errorf("Error updating database: %s", err)
-				break
-			}
-
-			// Delete rows outside of the metricDuration time
-			err = sidedb.CullDatabase(db, metricDuration)
-			if err != nil {
-				log.Errorf("Error culling database: %s", err)
-				break
-			}
-
-			log.Infof("Database updated: %d nodes, %d pods", len(nodeMetrics.Items), len(podMetrics.Items))
 		}
 	}
+}
+
+func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration) error {
+	nodeMetrics, err := client.MetricsV1beta1().NodeMetricses().List(v1.ListOptions{})
+	if err != nil {
+		log.Errorf("Error scraping node metrics: %s", err)
+		return err
+	}
+
+	podMetrics, err := client.MetricsV1beta1().PodMetricses("").List(v1.ListOptions{})
+	if err != nil {
+		log.Errorf("Error scraping pod metrics: %s", err)
+		return err
+	}
+
+	// Insert scrapes into DB
+	err = sidedb.UpdateDatabase(db, nodeMetrics, podMetrics)
+	if err != nil {
+		log.Errorf("Error updating database: %s", err)
+		return err
+	}
+
+	// Delete rows outside of the metricDuration time
+	err = sidedb.CullDatabase(db, metricDuration)
+	if err != nil {
+		log.Errorf("Error culling database: %s", err)
+		return err
+	}
+
+	log.Infof("Database updated: %d nodes, %d pods", len(nodeMetrics.Items), len(podMetrics.Items))
+	return nil
 }
 
 func homeDir() string {
