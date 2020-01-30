@@ -47,10 +47,10 @@ func nodeHandler(db *sql.DB) http.HandlerFunc {
 			w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
 		}
 
-		w.Write([]byte(j))
+		w.Write(j)
 	}
 
-	return http.HandlerFunc(fn)
+	return fn
 }
 
 func podHandler(db *sql.DB) http.HandlerFunc {
@@ -74,10 +74,10 @@ func podHandler(db *sql.DB) http.HandlerFunc {
 			w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
 		}
 
-		w.Write([]byte(j))
+		w.Write(j)
 	}
 
-	return http.HandlerFunc(fn)
+	return fn
 }
 
 func getRows(db *sql.DB, table string, metricName string, selector ResourceSelector) (*sql.Rows, error) {
@@ -123,9 +123,6 @@ func getRows(db *sql.DB, table string, metricName string, selector ResourceSelec
 
 	query = fmt.Sprintf(query+" where "+strings.Join(args, " and ")+" group by name, time order by %v;", table, strings.Join(orderBy, ", "))
 
-	log.Debugf("Query: %s", query)
-	log.Debugf("Values: %v", values)
-
 	return db.Query(query, values...)
 }
 
@@ -163,16 +160,9 @@ func getPodMetrics(db *sql.DB, metricName string, selector ResourceSelector) (Si
 
 		v, err := strconv.ParseUint(metricValue, 10, 64)
 
-		if metricName == "memory" {
-			newMetric = MetricPoint{
-				Timestamp: t,
-				Value:     v / 1000,
-			}
-		} else {
-			newMetric = MetricPoint{
-				Timestamp: t,
-				Value:     v,
-			}
+		newMetric = MetricPoint{
+			Timestamp: t,
+			Value:     v,
 		}
 
 		if _, ok := resultList[pod]; ok {
@@ -208,13 +198,7 @@ func getPodMetrics(db *sql.DB, metricName string, selector ResourceSelector) (Si
 	Queries SQLite and returns a list of metrics.
 */
 func getNodeMetrics(db *sql.DB, metricName string, selector ResourceSelector) (SidecarMetricResultList, error) {
-	stripNum := 2
-	if metricName == "cpu" {
-		stripNum = 1
-	}
-
 	resultList := make(map[string]SidecarMetric)
-
 	rows, err := getRows(db, "nodes", metricName, selector)
 
 	if err != nil {
@@ -240,18 +224,14 @@ func getNodeMetrics(db *sql.DB, metricName string, selector ResourceSelector) (S
 			return SidecarMetricResultList{}, err
 		}
 
-		v, err := strconv.ParseUint(metricValue[0:len(metricValue)-stripNum], 10, 64)
+		v, err := strconv.ParseUint(metricValue, 10, 64)
+		if err != nil {
+			return SidecarMetricResultList{}, err
+		}
 
-		if metricName == "memory" {
-			newMetric = MetricPoint{
-				Timestamp: t,
-				Value:     v / 10,
-			}
-		} else {
-			newMetric = MetricPoint{
-				Timestamp: t,
-				Value:     v,
-			}
+		newMetric = MetricPoint{
+			Timestamp: t,
+			Value:     v,
 		}
 
 		if _, ok := resultList[node]; ok {

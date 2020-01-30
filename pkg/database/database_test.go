@@ -127,7 +127,7 @@ var _ = Describe("Database functions", func() {
 				Expect(err).To(BeNil())
 				Expect(name).To(Equal("testing"))
 				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
 			}
 
 			rows, err = db.Query("select name, container, cpu, memory from pods")
@@ -150,7 +150,7 @@ var _ = Describe("Database functions", func() {
 				Expect(name).To(Equal("testing"))
 				Expect(container).To(Equal("container_test"))
 				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
 			}
 		})
 		It("should cull the database based on a window.", func() {
@@ -170,7 +170,7 @@ var _ = Describe("Database functions", func() {
 
 			sideDb.UpdateDatabase(db, &nm, &pm)
 
-			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes','localtime'));"
+			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes'));"
 			_, err = db.Exec(sqlStmt)
 			if err != nil {
 				panic(err.Error())
@@ -197,7 +197,7 @@ var _ = Describe("Database functions", func() {
 				Expect(err).To(BeNil())
 				Expect(name).To(Equal("testing"))
 				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue()))
+				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
 			}
 
 		})
