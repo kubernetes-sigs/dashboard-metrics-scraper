@@ -26,6 +26,18 @@ go build \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
+elif [[ "$GOARCH" = "s390x" ]]; then
+
+echo "Detected s390x. Setting additional variables.";
+
+apt-get install -y gcc-s390x-linux-gnu
+
+env CC=s390x-linux-gnu-gcc \
+CGO_ENABLED=1 GOOS=linux \
+go build \
+-installsuffix 'static' \
+-ldflags '-extldflags "-static"' \
+-o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 else
 
 echo "Build script building for ${GOARCH}";
