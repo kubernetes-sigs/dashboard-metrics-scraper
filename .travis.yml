@@ -5,7 +5,7 @@ sudo: required
 dist: xenial
 language: go
 go:
-- "1.11.4"
+- "1.13"
 
 go_import_path: github.com/kubernetes-sigs/dashboard-metrics-scraper
 
