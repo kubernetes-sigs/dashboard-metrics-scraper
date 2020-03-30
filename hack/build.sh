@@ -26,6 +26,19 @@ go build \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
+elif [[ "$GOARCH" = "ppc64le" ]]; then
+
+echo "Detected ppc64le. Setting additional variables.";
+
+apt-get install -y gcc-powerpc64le-linux-gnu
+
+env CC=powerpc64le-linux-gnu-gcc \
+CGO_ENABLED=1 GOOS=linux \
+go build \
+-installsuffix 'static' \
+-ldflags '-extldflags "-static"' \
+-o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
+
 elif [[ "$GOARCH" = "s390x" ]]; then
 
 echo "Detected s390x. Setting additional variables.";
