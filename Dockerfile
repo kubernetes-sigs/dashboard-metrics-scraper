@@ -33,14 +33,8 @@ RUN echo "Building for $GOARCH" \
 # Final stage: the running container.
 FROM gcr.io/distroless/static:nonroot AS final
 
-# Import the Certificate-Authority certificates for enabling HTTPS.
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
 # Import the compiled executable from the second stage.
 COPY --from=builder /metrics-sidecar /metrics-sidecar
-
-# We need a tmp folder too
-COPY --from=builder /tmp /tmp
 
 # Declare the port on which the webserver will be exposed.
 EXPOSE 8080
