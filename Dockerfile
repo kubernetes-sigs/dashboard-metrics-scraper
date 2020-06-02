@@ -30,6 +30,9 @@ RUN echo "Building for $GOARCH" \
     && ln -sf `pwd` ${GOPATH}/src/github.com/kubernetes-sigs/dashboard-metrics-scraper \
     && GOARCH=${GOARCH} hack/build.sh 
 
+# Create a nonroot user for final image
+RUN useradd -u 10001 nonroot 
+
 # Final stage: the running container.
 FROM scratch AS final
 
@@ -42,8 +45,12 @@ COPY --from=builder /metrics-sidecar /metrics-sidecar
 # We need a tmp folder too
 COPY --from=builder /tmp /tmp
 
+# Copy nonroot user
+COPY --from=builder /etc/passwd /etc/passwd
+
 # Declare the port on which the webserver will be exposed.
 EXPOSE 8080
+USER nonroot
 
 # Run the compiled binary.
 ENTRYPOINT ["/metrics-sidecar"]
