@@ -9,6 +9,7 @@ Small binary to scrape and store a small window of metrics from the Metrics Serv
 | db-file  | What file to use as a SQLite3 database.  |  `/tmp/metrics.db` |
 | metric-resolution | The resolution at which dashboard-metrics-scraper will poll metrics.  | `1m` |
 | metric-duration | The duration after which metrics are purged from the database. | `15m` |
+| namespace | The namespace to scope metrics scraping to. Empty value will scrape at the cluster level, setting this will scrape for pods in the namespace. |  |
 
 ## Community, discussion, contribution, and support
 
