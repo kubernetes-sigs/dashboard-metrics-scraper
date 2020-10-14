@@ -12,7 +12,7 @@ ARG GOOS=linux
 # Install the Certificate-Authority certificates for the app to be able to make
 # calls to HTTPS endpoints.
 RUN apt-get update && \
-    apt-get install -y ca-certificates git gcc libc-dev libncurses5-dev
+    apt-get install -y ca-certificates git gcc libc-dev libncurses5-dev sqlite3
 
 # Set the environment variables for the go command:
 # * GOFLAGS=-mod=vendor to force `go build` to look into the `/vendor` folder.

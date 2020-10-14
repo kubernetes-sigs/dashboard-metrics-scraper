@@ -16,6 +16,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	metricsclient "k8s.io/metrics/pkg/client/clientset/versioned"
 
 	"github.com/gorilla/handlers"
@@ -28,6 +29,7 @@ func main() {
 	var metricResolution *time.Duration
 	var metricDuration *time.Duration
 	var logLevel *string
+	var metricNamespace *string
 
 	log.SetFormatter(&log.JSONFormatter{})
 
@@ -43,6 +45,8 @@ func main() {
 	metricResolution = flag.Duration("metric-resolution", 1*time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 	logLevel = flag.String("log-level", "info", "The log level")
+	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace
+	metricNamespace = flag.String("namespace", getEnv("POD_NAMESPACE", ""), "The namespace to use for all metrics calls; when empty, search at the node level.")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -61,6 +65,7 @@ func main() {
 	}
 
 	log.Infof("Kubernetes host: %s", config.Host)
+	log.Infof("Namespace: %s", *metricNamespace)
 
 	// Generate the metrics client
 	clientset, err := metricsclient.NewForConfig(config)
@@ -100,7 +105,7 @@ func main() {
 			return
 
 		case <-ticker.C:
-			err = update(clientset, db, metricDuration)
+			err = update(clientset, db, metricDuration, metricNamespace)
 			if err != nil {
 				break
 			}
@@ -108,14 +113,26 @@ func main() {
 	}
 }
 
-func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration) error {
-	nodeMetrics, err := client.MetricsV1beta1().NodeMetricses().List(v1.ListOptions{})
-	if err != nil {
-		log.Errorf("Error scraping node metrics: %s", err)
-		return err
+/**
+* Update the Node and Pod metrics in the provided DB
+ */
+func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration, metricNamespace *string) error {
+	nodeMetrics := &v1beta1.NodeMetricsList{}
+	podMetrics := &v1beta1.PodMetricsList{}
+	var err error
+
+	// If a namespace is provided, don't make a call to the Node (scoped deployment)
+	if *metricNamespace == "" {
+		// List node metrics across the cluster
+		nodeMetrics, err = client.MetricsV1beta1().NodeMetricses().List(v1.ListOptions{})
+		if err != nil {
+			log.Errorf("Error scraping node metrics: %s", err)
+			return err
+		}
 	}
 
-	podMetrics, err := client.MetricsV1beta1().PodMetricses("").List(v1.ListOptions{})
+	// List pod metrics across the cluster, or for a given namespace
+	podMetrics, err = client.MetricsV1beta1().PodMetricses(*metricNamespace).List(v1.ListOptions{})
 	if err != nil {
 		log.Errorf("Error scraping pod metrics: %s", err)
 		return err
@@ -139,9 +156,23 @@ func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Du
 	return nil
 }
 
+/**
+* Lookup the user home directory respective of the OS
+ */
 func homeDir() string {
 	if h := os.Getenv("HOME"); h != "" {
 		return h
 	}
 	return os.Getenv("USERPROFILE") // windows
+}
+
+/**
+* Lookup the environment variable provided and set to default value if variable isn't found
+ */
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = fallback
+	}
+	return value
 }
