@@ -70,7 +70,10 @@ var _ = Describe("Database functions", func() {
 
 			defer db.Close()
 
-			sideDb.CreateDatabase(db)
+			err = sideDb.CreateDatabase(db)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			_, err = db.Query("select * from nodes;")
 			if err != nil {
@@ -86,7 +89,10 @@ var _ = Describe("Database functions", func() {
 			}
 			defer db.Close()
 
-			sideDb.CreateDatabase(db)
+			err = sideDb.CreateDatabase(db)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			_, err = db.Query("select * from pods;")
 			if err != nil {
@@ -102,12 +108,18 @@ var _ = Describe("Database functions", func() {
 			}
 			defer db.Close()
 
-			sideDb.CreateDatabase(db)
+			err = sideDb.CreateDatabase(db)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			nm := nodeMetrics()
 			pm := podMetrics()
 
-			sideDb.UpdateDatabase(db, &nm, &pm)
+			err = sideDb.UpdateDatabase(db, &nm, &pm)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			rows, err := db.Query("select name, cpu, memory from nodes")
 			if err != nil {
@@ -168,7 +180,10 @@ var _ = Describe("Database functions", func() {
 			nm := nodeMetrics()
 			pm := podMetrics()
 
-			sideDb.UpdateDatabase(db, &nm, &pm)
+			err = sideDb.UpdateDatabase(db, &nm, &pm)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			sqlStmt := "insert into nodes(name,cpu,memory,storage,time) values('lame','1000','100000','0',datetime('now','-20 minutes'));"
 			_, err = db.Exec(sqlStmt)
@@ -177,7 +192,14 @@ var _ = Describe("Database functions", func() {
 			}
 
 			timeWindow, err := time.ParseDuration("5m")
-			sideDb.CullDatabase(db, &timeWindow)
+			if err != nil {
+				panic(err.Error())
+			}
+
+			err = sideDb.CullDatabase(db, &timeWindow)
+			if err != nil {
+				panic(err.Error())
+			}
 
 			rows, err := db.Query("select name, cpu, memory from nodes")
 			if err != nil {

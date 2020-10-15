@@ -79,6 +79,9 @@ func UpdateDatabase(db *sql.DB, nodeMetrics *v1beta1.NodeMetricsList, podMetrics
 */
 func CullDatabase(db *sql.DB, window *time.Duration) error {
 	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
 
 	windowStr := fmt.Sprintf("-%.0f seconds", window.Seconds())
 
@@ -97,6 +100,9 @@ func CullDatabase(db *sql.DB, window *time.Duration) error {
 	log.Debugf("Cleaning up nodes: %d rows removed", affected)
 
 	podstmt, err := tx.Prepare("delete from pods where time <= datetime('now', ?);")
+	if err != nil {
+		return err
+	}
 
 	defer podstmt.Close()
 	res, err = podstmt.Exec(windowStr)
