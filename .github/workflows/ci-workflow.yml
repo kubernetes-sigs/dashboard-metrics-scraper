@@ -47,7 +47,7 @@ jobs:
       - name: Run vet & lint
         run: |
           go vet .
-          golint .
+          golangci-lint .
 
       - name: Check Code
         shell: bash
@@ -88,7 +88,7 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -c -K || echo "Codecov upload failed"
 
   build:
-    name: build
+    name: Build
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
