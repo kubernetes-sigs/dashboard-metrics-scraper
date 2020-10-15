@@ -16,7 +16,7 @@ name: Continuous Integration - Code
 
 on:
   push:
-    branches: [ master, github-workflows ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
