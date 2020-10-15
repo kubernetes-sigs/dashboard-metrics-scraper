@@ -47,7 +47,7 @@ jobs:
       - name: Run vet & lint
         run: |
           go vet .
-          golangci-lint .
+          golangci-lint run
 
       - name: Check Code
         shell: bash
