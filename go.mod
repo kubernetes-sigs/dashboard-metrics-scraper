@@ -22,7 +22,7 @@ require (
 	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
 	golang.org/x/oauth2 v0.0.0-20170412232759-a6bd8cefa181 // indirect
 	golang.org/x/time v0.0.0-20161028155119-f51c12702a4d // indirect
-	google.golang.org/appengine v1.4.0 // indirect
+	google.golang.org/appengine v1.4.0
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect

@@ -48,7 +48,10 @@ func main() {
 	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace(s)
 	metricNamespace = flag.StringSliceP("namespace", "n", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls. When provided, skip node metrics. (defaults to cluster level metrics)")
 
-	flag.Set("logtostderr", "true")
+	err := flag.Set("logtostderr", "true")
+	if err != nil {
+		log.Errorf("Error cannot set logtostderr: %v", err)
+	}
 	flag.Parse()
 
 	level, err := log.ParseLevel(*logLevel)
@@ -159,16 +162,6 @@ func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Du
 
 	log.Infof("Database updated: %d nodes, %d pods", len(nodeMetrics.Items), len(podMetrics.Items))
 	return nil
-}
-
-/**
-* Lookup the user home directory respective of the OS
- */
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
 }
 
 /**

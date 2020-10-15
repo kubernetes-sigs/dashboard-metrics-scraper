@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// DashboardRouter defines the usable API routes
 func DashboardRouter(r *mux.Router, db *sql.DB) {
 	r.Path("/nodes/{Name}/metrics/{MetricName}/{Whatever}").HandlerFunc(nodeHandler(db))
 	r.Path("/namespaces/{Namespace}/pod-list/{Name}/metrics/{MetricName}/{Whatever}").HandlerFunc(podHandler(db))
@@ -23,7 +24,10 @@ func DashboardRouter(r *mux.Router, db *sql.DB) {
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	msg := fmt.Sprintf("%v - URL: %s", time.Now(), r.URL)
-	w.Write([]byte(msg))
+	_, err := w.Write([]byte(msg))
+	if err != nil {
+		log.Errorf("Error cannot write response: %v", err)
+	}
 }
 
 func nodeHandler(db *sql.DB) http.HandlerFunc {
@@ -37,17 +41,26 @@ func nodeHandler(db *sql.DB) http.HandlerFunc {
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Node Metrics Error - %v", err.Error())))
+			_, err := w.Write([]byte(fmt.Sprintf("Node Metrics Error - %v", err.Error())))
+			if err != nil {
+				log.Errorf("Error cannot write response: %v", err)
+			}
 		}
 
 		j, err := json.Marshal(resp)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
+			_, err := w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
+			if err != nil {
+				log.Errorf("Error cannot write response: %v", err)
+			}
 		}
 
-		w.Write(j)
+		_, err = w.Write(j)
+		if err != nil {
+			log.Errorf("Error cannot write response: %v", err)
+		}
 	}
 
 	return fn
@@ -64,17 +77,26 @@ func podHandler(db *sql.DB) http.HandlerFunc {
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Pod Metrics Error - %v", err.Error())))
+			_, err := w.Write([]byte(fmt.Sprintf("Pod Metrics Error - %v", err.Error())))
+			if err != nil {
+				log.Errorf("Error cannot write response: %v", err)
+			}
 		}
 
 		j, err := json.Marshal(resp)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
+			_, err := w.Write([]byte(fmt.Sprintf("JSON Error - %v", err.Error())))
+			if err != nil {
+				log.Errorf("Error cannot write response: %v", err)
+			}
 		}
 
-		w.Write(j)
+		_, err = w.Write(j)
+		if err != nil {
+			log.Errorf("Error cannot write response: %v", err)
+		}
 	}
 
 	return fn
@@ -89,7 +111,7 @@ func getRows(db *sql.DB, table string, metricName string, selector ResourceSelec
 		query = "select sum(cpu), name, uid, time from %s "
 	} else {
 		//default to metricName == "memory/usage"
-		metricName = "memory"
+		// metricName = "memory"
 		query = "select sum(memory), name, uid, time from %s "
 	}
 
@@ -159,6 +181,9 @@ func getPodMetrics(db *sql.DB, metricName string, selector ResourceSelector) (Si
 		}
 
 		v, err := strconv.ParseUint(metricValue, 10, 64)
+		if err != nil {
+			return SidecarMetricResultList{}, err
+		}
 
 		newMetric = MetricPoint{
 			Timestamp: t,
