@@ -92,7 +92,7 @@ func main() {
 	go func() {
 		r := mux.NewRouter()
 
-		sideapi.APIManager(r, db)
+		sideapi.Manager(r, db)
 		// Bind to a port and pass our router in
 		log.Fatal(http.ListenAndServe(":8000", handlers.CombinedLoggingHandler(os.Stdout, r)))
 	}()

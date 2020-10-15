@@ -11,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// APIManager provides a handler for all api calls
-func APIManager(r *mux.Router, db *sql.DB) {
+// Manager provides a handler for all api calls
+func Manager(r *mux.Router, db *sql.DB) {
 	dashboardRouter := r.PathPrefix("/api/v1/dashboard").Subrouter()
 	dashboardProvider.DashboardRouter(dashboardRouter, db)
 	r.PathPrefix("/").HandlerFunc(DefaultHandler)
