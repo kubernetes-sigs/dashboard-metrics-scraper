@@ -46,7 +46,7 @@ func main() {
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 	logLevel = flag.String("log-level", "info", "The log level")
 	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace
-	metricNamespace = flag.StringSlice("namespace", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls; when empty, search at the node level.")
+	metricNamespace = flag.StringSliceP("namespace", "n", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls; when empty, search at the node level.")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()

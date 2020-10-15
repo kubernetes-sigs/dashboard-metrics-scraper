@@ -17,7 +17,7 @@ require (
 	github.com/onsi/ginkgo v1.7.0
 	github.com/onsi/gomega v1.4.3
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/pflag v1.0.1 // indirect
+	github.com/spf13/pflag v1.0.1
 	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f // indirect
 	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
 	golang.org/x/oauth2 v0.0.0-20170412232759-a6bd8cefa181 // indirect
