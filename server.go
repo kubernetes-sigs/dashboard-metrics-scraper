@@ -45,8 +45,8 @@ func main() {
 	metricResolution = flag.Duration("metric-resolution", 1*time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 	logLevel = flag.String("log-level", "info", "The log level")
-	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace
-	metricNamespace = flag.StringSliceP("namespace", "n", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls; when empty, search at the node level.")
+	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace(s)
+	metricNamespace = flag.StringSliceP("namespace", "n", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls. When provided, skip node metrics. (defaults to cluster level metrics)")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
