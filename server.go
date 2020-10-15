@@ -2,12 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"net/http"
 	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -29,7 +29,7 @@ func main() {
 	var metricResolution *time.Duration
 	var metricDuration *time.Duration
 	var logLevel *string
-	var metricNamespace *string
+	var metricNamespace *[]string
 
 	log.SetFormatter(&log.JSONFormatter{})
 
@@ -46,7 +46,7 @@ func main() {
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 	logLevel = flag.String("log-level", "info", "The log level")
 	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace
-	metricNamespace = flag.String("namespace", getEnv("POD_NAMESPACE", ""), "The namespace to use for all metrics calls; when empty, search at the node level.")
+	metricNamespace = flag.StringSlice("namespace", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls; when empty, search at the node level.")
 
 	flag.Set("logtostderr", "true")
 	flag.Parse()
@@ -65,7 +65,7 @@ func main() {
 	}
 
 	log.Infof("Kubernetes host: %s", config.Host)
-	log.Infof("Namespace: %s", *metricNamespace)
+	log.Infof("Namespace(s): %s", *metricNamespace)
 
 	// Generate the metrics client
 	clientset, err := metricsclient.NewForConfig(config)
@@ -116,13 +116,13 @@ func main() {
 /**
 * Update the Node and Pod metrics in the provided DB
  */
-func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration, metricNamespace *string) error {
+func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration, metricNamespace *[]string) error {
 	nodeMetrics := &v1beta1.NodeMetricsList{}
 	podMetrics := &v1beta1.PodMetricsList{}
 	var err error
 
-	// If a namespace is provided, don't make a call to the Node (scoped deployment)
-	if *metricNamespace == "" {
+	// If no namespace is provided, make a call to the Node
+	if len(*metricNamespace) == 1 && (*metricNamespace)[0] == "" {
 		// List node metrics across the cluster
 		nodeMetrics, err = client.MetricsV1beta1().NodeMetricses().List(v1.ListOptions{})
 		if err != nil {
@@ -132,10 +132,15 @@ func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Du
 	}
 
 	// List pod metrics across the cluster, or for a given namespace
-	podMetrics, err = client.MetricsV1beta1().PodMetricses(*metricNamespace).List(v1.ListOptions{})
-	if err != nil {
-		log.Errorf("Error scraping pod metrics: %s", err)
-		return err
+	for _, namespace := range *metricNamespace {
+		pod, err := client.MetricsV1beta1().PodMetricses(namespace).List(v1.ListOptions{})
+		if err != nil {
+			log.Errorf("Error scraping '%s' for pod metrics: %s", namespace, err)
+			return err
+		}
+		podMetrics.TypeMeta = pod.TypeMeta
+		podMetrics.ListMeta = pod.ListMeta
+		podMetrics.Items = append(podMetrics.Items, pod.Items...)
 	}
 
 	// Insert scrapes into DB

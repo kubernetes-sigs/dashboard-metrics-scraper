@@ -1,6 +1,6 @@
 # Accept the Go version for the image to be set as a build argument.
-# Default to Go 1.11
-ARG GO_VERSION=1.12
+# Default to Go 1.13
+ARG GO_VERSION=1.13
 
 # First stage: build the executable.
 FROM golang:${GO_VERSION}-stretch AS builder
