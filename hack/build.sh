@@ -9,7 +9,8 @@ apt-get install -y libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gn
 env CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
 CGO_ENABLED=1 GOOS=linux GOARM=7 \
 go build \
--installsuffix 'static' \
+-tags netgo \
+-installsuffix 'static,netgo' \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
@@ -22,7 +23,8 @@ apt-get install -y gcc-aarch64-linux-gnu
 env CC=aarch64-linux-gnu-gcc \
 CGO_ENABLED=1 GOOS=linux \
 go build \
--installsuffix 'static' \
+-tags netgo \
+-installsuffix 'static,netgo' \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
@@ -35,7 +37,8 @@ apt-get install -y gcc-powerpc64le-linux-gnu
 env CC=powerpc64le-linux-gnu-gcc \
 CGO_ENABLED=1 GOOS=linux \
 go build \
--installsuffix 'static' \
+-tags netgo \
+-installsuffix 'static,netgo' \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
@@ -48,7 +51,8 @@ apt-get install -y gcc-s390x-linux-gnu
 env CC=s390x-linux-gnu-gcc \
 CGO_ENABLED=1 GOOS=linux \
 go build \
--installsuffix 'static' \
+-tags netgo \
+-installsuffix 'static,netgo' \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 else
@@ -56,7 +60,8 @@ else
 echo "Build script building for ${GOARCH}";
 
 go build \
--installsuffix 'static' \
+-tags netgo \
+-installsuffix 'static,netgo' \
 -ldflags '-extldflags "-static"' \
 -o /metrics-sidecar github.com/kubernetes-sigs/dashboard-metrics-scraper
 
