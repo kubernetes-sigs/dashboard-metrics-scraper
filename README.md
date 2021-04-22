@@ -1,4 +1,4 @@
-# dashboard-metrics-scraper [WIP]
+# dashboard-metrics-scraper
 
 Small binary to scrape and store a small window of metrics from the Metrics Server in Kubernetes.
 
@@ -9,7 +9,6 @@ Small binary to scrape and store a small window of metrics from the Metrics Serv
 | db-file  | What file to use as a SQLite3 database.  |  `/tmp/metrics.db` |
 | metric-resolution | The resolution at which dashboard-metrics-scraper will poll metrics.  | `1m` |
 | metric-duration | The duration after which metrics are purged from the database. | `15m` |
-| namespace | The namespace to use for all metric calls. When provided, skip node metrics. (defaults to cluster level metrics). | |
 
 ## Community, discussion, contribution, and support
 
