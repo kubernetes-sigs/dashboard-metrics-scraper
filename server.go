@@ -29,13 +29,14 @@ func main() {
 	var metricResolution *time.Duration
 	var metricDuration *time.Duration
 	var logLevel *string
+	var logToStdErr *bool
 	var metricNamespace *[]string
 
 	log.SetFormatter(&log.JSONFormatter{})
 
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 
 	// Only log the warning severity or above.
 	log.SetLevel(log.InfoLevel)
@@ -45,14 +46,15 @@ func main() {
 	metricResolution = flag.Duration("metric-resolution", 1*time.Minute, "The resolution at which dashboard-metrics-scraper will poll metrics.")
 	metricDuration = flag.Duration("metric-duration", 15*time.Minute, "The duration after which metrics are purged from the database.")
 	logLevel = flag.String("log-level", "info", "The log level")
+	logToStdErr = flag.Bool("logtostderr", true, "Log to stderr")
 	// When running in a scoped namespace, disable Node lookup and only capture metrics for the given namespace(s)
 	metricNamespace = flag.StringSliceP("namespace", "n", []string{getEnv("POD_NAMESPACE", "")}, "The namespace to use for all metric calls. When provided, skip node metrics. (defaults to cluster level metrics)")
 
-	err := flag.Set("logtostderr", "true")
-	if err != nil {
-		log.Errorf("Error cannot set logtostderr: %v", err)
-	}
 	flag.Parse()
+
+	if *logToStdErr {
+		log.SetOutput(os.Stderr)
+	}
 
 	level, err := log.ParseLevel(*logLevel)
 	if err != nil {
