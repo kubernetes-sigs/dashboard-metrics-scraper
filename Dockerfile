@@ -13,10 +13,6 @@ ARG GOOS=linux
 RUN apt-get update && \
     apt-get install -y ca-certificates git gcc libc-dev libncurses5-dev sqlite3
 
-# Set the environment variables for the go command:
-# * GOFLAGS=-mod=vendor to force `go build` to look into the `/vendor` folder.
-ENV GOFLAGS=-mod=vendor
-
 # Set the working directory outside $GOPATH to enable the support for modules.
 WORKDIR /src
 
