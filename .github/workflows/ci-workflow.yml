@@ -25,30 +25,28 @@ jobs:
     name: Static Check
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: on
       GOPROXY: "https://proxy.golang.org"
       TERM: xterm
     steps:
-      - name: Setup Environment
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.15.1
-
+          go-version: 1.18
       - name: Install Dependencies
         shell: bash
         run: |
-          command -v golangci-lint >/dev/null 2>&1 || { curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0; } && go mod download
-      
-      - name: Run vet & lint
+          go mod download
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.41.1
+      - name: Run vet
         run: |
           go vet .
-          golangci-lint run
-
       - name: Check Code
         shell: bash
         run: |
@@ -58,29 +56,23 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: on
       GOPROXY: "https://proxy.golang.org"
       TERM: xterm
-
     steps:
-      - name: Setup Environment
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.15.1
-
+          go-version: 1.18
       - name: Install Dependencies
         shell: bash
         run: |
-          command -v golangci-lint >/dev/null 2>&1 || { curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0; } && go mod download
-      
+          go mod download
       - name: Run Go test
         run: go test ./...
-
       - name: Cleanup & Upload Coverage
         shell: bash
         run: |
@@ -91,25 +83,20 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: on
       GOPROXY: "https://proxy.golang.org"
       TERM: xterm
-
     steps:
-      - name: Setup Environment
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.15.1
-
+          go-version: 1.18
       - name: Install Dependencies
         shell: bash
         run: |
-          command -v golangci-lint >/dev/null 2>&1 || { curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0; } && go mod download
-
+          go mod download
       - name: Run build
         run: go build .

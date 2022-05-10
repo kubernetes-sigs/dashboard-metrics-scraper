@@ -8,16 +8,16 @@ import (
 
 	sideDb "github.com/kubernetes-sigs/dashboard-metrics-scraper/pkg/database"
 	_ "github.com/mattn/go-sqlite3"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 func TestMetricsUtil(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Sidecar Database Test")
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Sidecar Database Test")
 }
 
 func nodeMetrics() v1beta1.NodeMetricsList {
@@ -60,9 +60,9 @@ func podMetrics() v1beta1.PodMetricsList {
 	return nm
 }
 
-var _ = Describe("Database functions", func() {
-	Context("With an in-memory database", func() {
-		It("should generate 'nodes' table to dump metrics in.", func() {
+var _ = ginkgo.Describe("Database functions", func() {
+	ginkgo.Context("With an in-memory database", func() {
+		ginkgo.It("should generate 'nodes' table to dump metrics in.", func() {
 			db, err := sql.Open("sqlite3", ":memory:")
 			if err != nil {
 				panic(err.Error())
@@ -79,10 +79,10 @@ var _ = Describe("Database functions", func() {
 			if err != nil {
 				panic(err.Error())
 			}
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 		})
 
-		It("should generate 'pods' table to dump metrics in.", func() {
+		ginkgo.It("should generate 'pods' table to dump metrics in.", func() {
 			db, err := sql.Open("sqlite3", ":memory:")
 			if err != nil {
 				panic(err.Error())
@@ -98,10 +98,10 @@ var _ = Describe("Database functions", func() {
 			if err != nil {
 				panic(err.Error())
 			}
-			Expect(err).To(BeNil())
+			gomega.Expect(err).To(gomega.BeNil())
 		})
 
-		It("should insert metrics into the database.", func() {
+		ginkgo.It("should insert metrics into the database.", func() {
 			db, err := sql.Open("sqlite3", ":memory:")
 			if err != nil {
 				panic(err.Error())
@@ -136,10 +136,10 @@ var _ = Describe("Database functions", func() {
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
-				Expect(err).To(BeNil())
-				Expect(name).To(Equal("testing"))
-				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(err).To(gomega.BeNil())
+				gomega.Expect(name).To(gomega.Equal("testing"))
+				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
+				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
 			}
 
 			rows, err = db.Query("select name, container, cpu, memory from pods")
@@ -158,14 +158,14 @@ var _ = Describe("Database functions", func() {
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
-				Expect(err).To(BeNil())
-				Expect(name).To(Equal("testing"))
-				Expect(container).To(Equal("container_test"))
-				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(err).To(gomega.BeNil())
+				gomega.Expect(name).To(gomega.Equal("testing"))
+				gomega.Expect(container).To(gomega.Equal("container_test"))
+				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
+				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
 			}
 		})
-		It("should cull the database based on a window.", func() {
+		ginkgo.It("should cull the database based on a window.", func() {
 			db, err := sql.Open("sqlite3", ":memory:")
 			if err != nil {
 				panic(err.Error())
@@ -216,10 +216,10 @@ var _ = Describe("Database functions", func() {
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
-				Expect(err).To(BeNil())
-				Expect(name).To(Equal("testing"))
-				Expect(cpu).To(Equal(testCpu.MilliValue()))
-				Expect(memory).To(Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(err).To(gomega.BeNil())
+				gomega.Expect(name).To(gomega.Equal("testing"))
+				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
+				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
 			}
 
 		})
