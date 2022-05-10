@@ -2,10 +2,10 @@
 # Read more at: http://docs.travis-ci.com/user/customizing-the-build/
 
 sudo: required
-dist: xenial
+dist: focal
 language: go
 go:
-- "1.13"
+- "1.18"
 
 go_import_path: github.com/kubernetes-sigs/dashboard-metrics-scraper
 
