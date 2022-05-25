@@ -13,7 +13,7 @@ require (
 	k8s.io/api v0.24.0
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
-	k8s.io/metrics v0.0.0-20190222100624-62aa511161ba
+	k8s.io/metrics v0.24.0
 )
 
 require (
