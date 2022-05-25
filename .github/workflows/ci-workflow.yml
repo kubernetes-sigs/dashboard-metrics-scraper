@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Continuous Integration - Code
+name: CI
 
 on:
   push:
@@ -61,8 +61,7 @@ jobs:
           go-version: 1.18
       - name: Install Dependencies
         shell: bash
-        run: |
-          go mod download
+        run: go mod download
       - name: Run Go test
         run: go test ./...
       - name: Cleanup & Upload Coverage
@@ -88,7 +87,6 @@ jobs:
           go-version: 1.18
       - name: Install Dependencies
         shell: bash
-        run: |
-          go mod download
+        run: go mod download
       - name: Run build
         run: go build .
