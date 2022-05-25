@@ -44,9 +44,6 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.41.1
-      - name: Run vet
-        run: |
-          go vet .
       - name: Check Code
         shell: bash
         run: |
