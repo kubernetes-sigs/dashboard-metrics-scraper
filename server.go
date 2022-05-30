@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"os"
@@ -124,12 +125,13 @@ func main() {
 func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Duration, metricNamespace *[]string) error {
 	nodeMetrics := &v1beta1.NodeMetricsList{}
 	podMetrics := &v1beta1.PodMetricsList{}
+	ctx := context.TODO()
 	var err error
 
 	// If no namespace is provided, make a call to the Node
 	if len(*metricNamespace) == 1 && (*metricNamespace)[0] == "" {
 		// List node metrics across the cluster
-		nodeMetrics, err = client.MetricsV1beta1().NodeMetricses().List(v1.ListOptions{})
+		nodeMetrics, err = client.MetricsV1beta1().NodeMetricses().List(ctx, v1.ListOptions{})
 		if err != nil {
 			log.Errorf("Error scraping node metrics: %s", err)
 			return err
@@ -138,7 +140,7 @@ func update(client *metricsclient.Clientset, db *sql.DB, metricDuration *time.Du
 
 	// List pod metrics across the cluster, or for a given namespace
 	for _, namespace := range *metricNamespace {
-		pod, err := client.MetricsV1beta1().PodMetricses(namespace).List(v1.ListOptions{})
+		pod, err := client.MetricsV1beta1().PodMetricses(namespace).List(ctx, v1.ListOptions{})
 		if err != nil {
 			log.Errorf("Error scraping '%s' for pod metrics: %s", namespace, err)
 			return err
