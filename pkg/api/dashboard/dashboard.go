@@ -109,10 +109,12 @@ func getRows(db *sql.DB, table string, metricName string, selector ResourceSelec
 	orderBy := []string{"name", "time"}
 	if metricName == "cpu" {
 		query = "select sum(cpu), name, uid, time from %s "
-	} else {
-		//default to metricName == "memory/usage"
-		// metricName = "memory"
+	} else if metricName == "memory" {
 		query = "select sum(memory), name, uid, time from %s "
+	} else if metricName == "ephemeral_storage" {
+		query = "select sum(storage), name, uid, time from %s "
+	} else { // unknown metric
+		query = "select NULL, name, uid, time from %s "
 	}
 
 	if table == "pods" {

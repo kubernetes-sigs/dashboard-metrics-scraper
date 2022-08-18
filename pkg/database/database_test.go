@@ -24,8 +24,9 @@ func nodeMetrics() v1beta1.NodeMetricsList {
 	tmp := v1beta1.NodeMetrics{}
 	tmp.SetName("testing")
 	tmp.Usage = v1.ResourceList{
-		v1.ResourceCPU:    resource.MustParse("1"),
-		v1.ResourceMemory: resource.MustParse("100"),
+		v1.ResourceCPU:              resource.MustParse("1"),
+		v1.ResourceMemory:           resource.MustParse("100"),
+		v1.ResourceEphemeralStorage: resource.MustParse("1000"),
 	}
 
 	nm := v1beta1.NodeMetricsList{
@@ -41,8 +42,9 @@ func podMetrics() v1beta1.PodMetricsList {
 	tmp2 := v1beta1.ContainerMetrics{}
 	tmp2.Name = "container_test"
 	tmp2.Usage = v1.ResourceList{
-		v1.ResourceCPU:    resource.MustParse("1"),
-		v1.ResourceMemory: resource.MustParse("100"),
+		v1.ResourceCPU:              resource.MustParse("1"),
+		v1.ResourceMemory:           resource.MustParse("100"),
+		v1.ResourceEphemeralStorage: resource.MustParse("1000"),
 	}
 
 	tmp := v1beta1.PodMetrics{}
@@ -121,7 +123,7 @@ var _ = ginkgo.Describe("Database functions", func() {
 				panic(err.Error())
 			}
 
-			rows, err := db.Query("select name, cpu, memory from nodes")
+			rows, err := db.Query("select name, cpu, memory, storage from nodes")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -130,19 +132,22 @@ var _ = ginkgo.Describe("Database functions", func() {
 				var name string
 				var cpu int64
 				var memory int64
-				err = rows.Scan(&name, &cpu, &memory)
+				var storage int64
+				err = rows.Scan(&name, &cpu, &memory, &storage)
 				if err != nil {
 					log.Fatal(err)
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
+				testStorage := resource.MustParse("1000")
 				gomega.Expect(err).To(gomega.BeNil())
 				gomega.Expect(name).To(gomega.Equal("testing"))
 				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
 				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(storage).To(gomega.Equal(testStorage.MilliValue() / 1000))
 			}
 
-			rows, err = db.Query("select name, container, cpu, memory from pods")
+			rows, err = db.Query("select name, container, cpu, memory, storage from pods")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -152,17 +157,20 @@ var _ = ginkgo.Describe("Database functions", func() {
 				var container string
 				var cpu int64
 				var memory int64
-				err = rows.Scan(&name, &container, &cpu, &memory)
+				var storage int64
+				err = rows.Scan(&name, &container, &cpu, &memory, &storage)
 				if err != nil {
 					log.Fatal(err)
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
+				testStorage := resource.MustParse("1000")
 				gomega.Expect(err).To(gomega.BeNil())
 				gomega.Expect(name).To(gomega.Equal("testing"))
 				gomega.Expect(container).To(gomega.Equal("container_test"))
 				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
 				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(storage).To(gomega.Equal(testStorage.MilliValue() / 1000))
 			}
 		})
 		ginkgo.It("should cull the database based on a window.", func() {
@@ -201,7 +209,7 @@ var _ = ginkgo.Describe("Database functions", func() {
 				panic(err.Error())
 			}
 
-			rows, err := db.Query("select name, cpu, memory from nodes")
+			rows, err := db.Query("select name, cpu, memory, storage from nodes")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -210,16 +218,19 @@ var _ = ginkgo.Describe("Database functions", func() {
 				var name string
 				var cpu int64
 				var memory int64
-				err = rows.Scan(&name, &cpu, &memory)
+				var storage int64
+				err = rows.Scan(&name, &cpu, &memory, &storage)
 				if err != nil {
 					log.Fatal(err)
 				}
 				testCpu := resource.MustParse("1")
 				testMemory := resource.MustParse("100")
+				testStorage := resource.MustParse("1000")
 				gomega.Expect(err).To(gomega.BeNil())
 				gomega.Expect(name).To(gomega.Equal("testing"))
 				gomega.Expect(cpu).To(gomega.Equal(testCpu.MilliValue()))
 				gomega.Expect(memory).To(gomega.Equal(testMemory.MilliValue() / 1000))
+				gomega.Expect(storage).To(gomega.Equal(testStorage.MilliValue() / 1000))
 			}
 
 		})
