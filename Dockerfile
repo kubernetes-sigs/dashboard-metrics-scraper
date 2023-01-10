@@ -2,11 +2,11 @@
 ARG GO_VERSION=1.18
 
 # First stage: build the executable.
-FROM golang:${GO_VERSION}-stretch AS builder
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-stretch AS builder
 
 # What arch is it?
-ARG GOARCH=amd64
-ARG GOOS=linux
+ARG GOARCH=$TARGETARCH
+ARG GOOS=$TARGETOS
 
 # Install the Certificate-Authority certificates for the app to be able to make
 # calls to HTTPS endpoints.
