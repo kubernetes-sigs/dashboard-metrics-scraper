@@ -2,7 +2,7 @@
 ARG GO_VERSION=1.18
 
 # First stage: build the executable.
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-stretch AS builder
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-buster AS builder
 
 # Expose global args
 ARG TARGETARCH
