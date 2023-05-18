@@ -1,8 +1,8 @@
 # Accept the Go version for the image to be set as a build argument.
-ARG GO_VERSION=1.18
+ARG GO_VERSION=1.19.8
 
 # First stage: build the executable.
-FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-stretch AS builder
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-buster AS builder
 
 # Expose global args
 ARG TARGETARCH
